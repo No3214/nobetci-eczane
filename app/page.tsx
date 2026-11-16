@@ -49,6 +49,10 @@ export default function Home() {
   const [showPicker, setShowPicker] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [showAllPharmacies, setShowAllPharmacies] = useState(false);
+  // Cached/manual results do not establish a fresh GPS-distance ranking.
+  const hasCurrentGpsDistances = gpsStatus === "granted" && !selectedArea && !isOfflineData &&
+    Number.isFinite(userCoords.lat) && Number.isFinite(userCoords.lng) &&
+    pharmacies.some(p => typeof p.distance === "number" && Number.isFinite(p.distance) && p.distance >= 0);
 
   // Wrapper for requestLocation to also fetch pharmacies
   const handleRequestLocation = useCallback(() => {
@@ -179,12 +183,12 @@ export default function Home() {
             </div>
           )}
 
-          {gpsStatus === "granted" && (
+          {hasCurrentGpsDistances && (
             <div className="rounded-2xl bg-emerald-500/5 border border-emerald-500/10 p-3 text-center flex flex-col items-center justify-center gap-1.5">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-400 animate-pulse" />
                 <span className="text-[11px] font-bold text-emerald-300">
-                  Konuma Göre Sıralandı {showAllPharmacies ? "(Tüm Sonuçlar)" : "(En Yakın 3 Eczane)"}
+                  Konuma Göre Yaklaşık Sıralama {showAllPharmacies ? "(Tüm Sonuçlar)" : "(İlk 3 Sonuç)"}
                 </span>
               </div>
               {addressLoading ? (
@@ -249,7 +253,7 @@ export default function Home() {
             >
               <span className="flex items-center gap-2">
                 <Compass className="h-4 w-4 text-emerald-400" />
-                Haritada Gör (En Yakın 3 Eczane)
+                Haritada Gör (İlk 3 Eczane)
               </span>
               <span className="text-[10px] text-neutral-500 font-bold bg-neutral-950 px-2.5 py-1 rounded-lg border border-neutral-800">
                 {showMap ? "Gizle" : "Göster"}
@@ -281,7 +285,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(index, 2) * 0.1, duration: 0.3 }}
             >
-              <PharmacyCard pharmacy={pharmacy} index={index} elderMode={elderMode} />
+              <PharmacyCard pharmacy={pharmacy} index={index} elderMode={elderMode} distanceFromUser={hasCurrentGpsDistances} />
             </motion.div>
           ))}
           
@@ -301,10 +305,10 @@ export default function Home() {
           {!loading && pharmacies.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-sm font-semibold text-neutral-400">
-                Hiç nöbetçi eczane bulunamadı.
+                Eczane kaydı alınamadı.
               </p>
               <p className="mt-1 text-xs text-neutral-500 max-w-xs">
-                Lütfen konum izni verdiğinizden emin olun veya üstteki menüden başka bir il/ilçe arayın.
+                Bu sonuç nöbetçi eczane olmadığı anlamına gelmez. Resmî kaynaklardan ve telefonla teyit edin.
               </p>
             </div>
           )}
