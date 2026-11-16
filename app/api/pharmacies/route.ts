@@ -56,22 +56,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Calculate distance if coordinates are provided
+    // Only calculate a distance from an actual user location.
     if (lat !== undefined && lng !== undefined) {
       pharmacies = pharmacies.map((p) => {
-        const dist = calculateDistanceKm(lat!, lng!, p.latitude, p.longitude);
-        return { ...p, distance: dist };
+        const usable = Number.isFinite(p.latitude) && Number.isFinite(p.longitude)
+          && Math.abs(p.latitude) <= 90 && Math.abs(p.longitude) <= 180
+          && !(p.latitude === 0 && p.longitude === 0);
+        const km = usable ? calculateDistanceKm(lat, lng, p.latitude, p.longitude) : undefined;
+        return { ...p, distance: km !== undefined && Number.isFinite(km) ? km : undefined };
       });
-
-      // Sort by distance ascending
-      pharmacies.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+      // Do not rank missing coordinates ahead of measured distances.
+      pharmacies.sort((a, b) => a.distance === undefined
+        ? (b.distance === undefined ? 0 : 1)
+        : b.distance === undefined ? -1 : a.distance - b.distance);
     } else {
-      // Default sort (by mock distance or confidence)
-      pharmacies = pharmacies.map((p, index) => ({
-        ...p,
-        // Mock distance for sorting if GPS is denied
-        distance: 0.8 + index * 0.5
-      }));
+      // GPS denied/unavailable: preserve provider order and remove any fake
+      // or source-relative distance, which is not relative to this user.
+      pharmacies = pharmacies.map(p => ({ ...p, distance: undefined }));
     }
 
     return NextResponse.json(
