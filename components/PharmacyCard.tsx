@@ -14,11 +14,14 @@ interface PharmacyCardProps {
   pharmacy: Pharmacy;
   index: number; // 0, 1, 2 for display priority
   elderMode?: boolean;
+  distanceFromUser?: boolean; // true only for a current GPS-based query
 }
 
-export default function PharmacyCard({ pharmacy, index, elderMode = false }: PharmacyCardProps) {
+export default function PharmacyCard({ pharmacy, index, elderMode = false, distanceFromUser = false }: PharmacyCardProps) {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const userDistance = distanceFromUser && typeof pharmacy.distance === "number" &&
+    Number.isFinite(pharmacy.distance) && pharmacy.distance >= 0 ? pharmacy.distance : null;
 
   // No provider contract supplies a verified per-pharmacy duty interval.
   const statusText = pharmacy.source === "mock"
@@ -111,14 +114,14 @@ export default function PharmacyCard({ pharmacy, index, elderMode = false }: Pha
       }`}
     >
       {/* Index Tag / Highlight badge */}
-      {index === 0 && !elderMode && (
+      {index === 0 && !elderMode && userDistance !== null && (
         <span className="absolute top-0 right-0 rounded-bl-2xl bg-emerald-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
-          En Yakın Eczane
+          Listedeki En Yakın
         </span>
       )}
-      {index === 0 && elderMode && (
+      {index === 0 && elderMode && userDistance !== null && (
         <span className="absolute top-0 right-0 rounded-bl-xl bg-white px-3 py-1 text-xs font-black uppercase tracking-wider text-black">
-          EN YAKIN
+          LİSTEDEKİ EN YAKIN
         </span>
       )}
 
@@ -139,7 +142,7 @@ export default function PharmacyCard({ pharmacy, index, elderMode = false }: Pha
                 : "bg-neutral-800 text-emerald-400 text-xs"
             }`}>
               <MapPin className="h-3.5 w-3.5" />
-              {pharmacy.distance !== undefined ? formatDistance(pharmacy.distance) : "Hesaplanıyor"}
+              {userDistance !== null ? `≈ ${formatDistance(userDistance)} (kuş uçuşu)` : "Mesafe için konum gerekli"}
             </span>
 
             {/* Source status: never infer duty from the client clock */}
