@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run && node tests/pharmacy-share.node.cjs",
+    "test": "vitest run && node tests/pharmacy-share.node.cjs && node --test tests/pharmacy-distance-claims.node.cjs",
     "test:watch": "vitest"
   },
   "dependencies": {
