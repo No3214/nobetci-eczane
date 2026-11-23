@@ -50,4 +50,7 @@ node_modules/
 
 .vercel
 /scratch
+/.agent/
+/AGENTS.md
+/CLAUDE.md
 
